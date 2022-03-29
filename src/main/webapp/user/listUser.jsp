@@ -2,8 +2,8 @@
 
 <%@ page import="java.util.List"  %>
 
-<%@ page import="com.model2.mvc.service.domain.User" %>
-<%@ page import="com.model2.mvc.common.Search" %>
+<%@page import="com.model2.mvc.service.domain.User" %>
+<%@page import="com.model2.mvc.common.Search" %>
 <%@page import="com.model2.mvc.common.Page"%>
 <%@page import="com.model2.mvc.common.util.CommonUtil"%>
 
