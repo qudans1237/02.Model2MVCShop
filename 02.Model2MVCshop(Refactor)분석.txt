@@ -1,0 +1,669 @@
+========
+top.jsp
+========
+<%@ page import="com.model2.mvc.service.domain.User" %>
+<%User user=(User)session.getAttribute("user");%>
+
+session에 유저가 로그인 됐는지를 확인 하기 위한 import
+
+<%if(user == null) { %>
+<a href="/user/loginView.jsp" target="rightFrame">login</a>   
+<%}%>
+
+
+
+<% if(user != null) {  %>
+<a href="/logout.do" target="_parent">logout</a>  
+ <% } %>
+user login 유무 확인: 세션에 유저 정보가 없을시 로그인(/user/loginView.jsp) 이동
+                      세션에 유저 정보가 있다면 logout버튼("/logout.do") 활성화
+
+
+
+============================================================================================
+
+========
+left.jsp
+========
+<%@ page import="com.model2.mvc.service.domain.User" %>
+<%
+User vo=(User)session.getAttribute("user");
+String role="";
+if(vo != null) {
+role=vo.getRole();
+}
+%>
+role (admin/user) 관리자/유저 확인하는거임
+로그인 유무 확인 vo != null 일떄 롤러에 getRole() 적용
+
+javascript
+ function history(){
+popWin = window.open("/history.jsp","popWin","left=300, top=200, width=300, height=200, marginwidth=0, marginheight=0, scrollbars=no, scrolling=no, menubar=no, resizable=no");
+}
+최근 본 상품 목록 팝업창
+
+
+<% if(vo != null){ %>
+<a href="/getUser.do?userId=<%=vo.getUserId() %>" target="rightFrame">개인정보조회</a>
+<%}%>
+<% if(role.equals("admin")){%>
+<a href="/listUser.do" target="rightFrame">회원정보조회</a>
+<% } %>
+
+유저가 로그인이 되어 있다면 개인정보조회 버튼 활성화 /getUser.do?userId=<%=vo.getUserId() %> 로그인된 유저아이디로 경로이동
+로그인된 유저에 role(등급)이 "admin" 관리자일 경우 회원정보조회 버튼 활성화 /listUser.do" 이동
+
+
+<%if(role.equals("admin")){ %>
+<a href="../product/addProductView.jsp;" target="rightFrame">판매상품등록</a>
+<a href="/listProduct.do?menu=manage"  target="rightFrame">판매상품관리</a>
+<%}%>
+
+로그인된 유저에 role(등급)이 "admin" 관리자일 경우 판매상품등록 버튼 활성화(../product/addProductView.jsp;) 이동
+로그인된 유저에 role(등급)이 "admin" 관리자일 경우 판매상품관리 버튼 활성화(/listProduct.do?menu=manage")이동 파라미터에 menu=manage(관리자모드) 전송 
+
+
+<a href="/listProduct.do?menu=search" target="rightFrame">상 품 검 색</a>
+비회원/로그인된 유저 모두 볼수있는 상품검색 ("/listProduct.do?menu=search") 이동 파라미터에 menu=search(검색모드) 전송
+
+<%if(vo != null && role.equals("user")){%>
+<a href="/listPurchase.do"  target="rightFrame">구매이력조회</a>
+<%  }%>
+
+로그인된 유저 role등급이 ("user")라면 구매이력 조회 활성화("/listPurchase.do") 이동
+
+<a href="javascript:history()">최근 본 상품</a>
+비회원/로그인된 유저 모두 볼수있는 최근 본 상품 cookie로 관리 해야함
+
+==========================================================================================================================
+=============
+loginView.jsp
+=============
+아이디 /비밀번호 체크 후
+로그인 버튼 => loginAction.java 이동
+
+adduser버튼 (addUserView.jsp;) 이동
+
+
+
+==========================================================================================================================
+===============
+addUserView.jsp
+===============
+회원가입 페이지
+
+id중복확인 (javascript:fncCheckDuplication();)(CheckDuplicationAction.java)로 이동
+
+===========================
+CheckDuplicationAction.java
+===========================
+String execute()
+
+String userId=request.getParameter("userId");
+파라미터로 들어온 userId를 비교하기 위함
+
+UserService userService=new UserServiceImpl();
+		boolean result=userService.checkDuplication(userId);
+UserServiceImpl()에서 boolean 체크를 한다.
+
+===============
+UserServiceImpl()
+===============
+public boolean checkDuplication(String userId) throws Exception {
+		boolean result=true;
+		User user=userDao.findUser(userId);
+		if(user != null) {
+			result=false;
+		}
+		return result;
+
+userDao(findUser())로 DB조회
+userId 가 있으면 false 리턴 없으면 true
+
+result 받은값을 
+request.setAttribute("result",new Boolean(result) );
+request.setAttribute("userId", userId);
+
+"result","userId"에 담고 "forward:/user/checkDuplication.jsp"로 보낸다
+
+=================
+checkDuplication.jsp
+=================
+
+<%
+	boolean result=false;
+	if(request.getAttribute("result") != null){
+		result=((Boolean)request.getAttribute("result")).booleanValue();
+	}
+	String userId=(String)request.getAttribute("userId");
+%>
+CheckDuplicationAction에서 갖고온 "result","userId" 받기
+
+function fncUseId() {
+	if(opener) {
+		opener.document.detailForm.userId.value = "<%=userId%>";
+	}
+	window.close();
+}
+중복체크한 아이디 계속 보여주기 위한 javascript 함수
+
+<%if(request.getAttribute("result") != null){ %>
+<%=userId %>
+<%if(result){%>
+는 사용 가능합니다.
+<%}else{%>
+는 사용이 불가능합니다.
+<%}
+}%>
+갖고온 result가 ture라면 db에 없으니 사용가능합니다.
+갖고온 result가 false라면 db에 있으니 사용불가합니다.
+
+id중복 확인이 끝난다면 다시 addUserView 회원가입 진행
+
+모든 값을 입력후 가입버튼 action='/addUser.do' 이동
+	return "redirect:/user/loginView.jsp"; 로그인 페이지로 이동
+
+취소 function resetData() {
+	document.detailForm.reset();
+리셋하기
+
+addUser 끝!
+=============================================================================================
+=============
+loginView.jsp
+=============
+
+ActionServlet.service() RequestURI : /login.do
+prop : {/updateUser.do=com.model2.mvc.view.user.UpdateUserAction, /login.do=com.model2.mvc.view.user.LoginAction, /getUser.do=com.model2.mvc.view.user.GetUserAction, /updateUserView.do=com.model2.mvc.view.user.UpdateUserViewAction, /addUser.do=com.model2.mvc.view.user.AddUserAction, /listUser.do=com.model2.mvc.view.user.ListUserAction, /logout.do=com.model2.mvc.view.user.LogoutAction, /checkDuplication.do=com.model2.mvc.view.user.CheckDuplicationAction}
+path : /login.do
+className : com.model2.mvc.view.user.LoginAction
+
+LoginAction.java 에서 파라미터에 "userId","password"를 보내고 
+
+public User loginUser(User user) throws Exception {
+User dbUser=userDao.findUser(user.getUserId());
+if(! dbUser.getPassword().equals(user.getPassword())){
+throw new Exception("로그인에 실패했습니다.");
+}	
+return dbUser;
+}
+
+UserServiceImpl 를 통해 userDao에 있는 findUser() db데이터 체크
+
+
+UserService userService=new UserServiceImpl();
+User dbUser=userService.loginUser(user);
+
+domain.user 에 값을 세팅해준후 
+HttpSession session=request.getSession();
+session.setAttribute("user", dbUser);
+
+sessionOS에 user값 dbUser를 "user"에 을 저장한다.
+return "redirect:/index.jsp";
+홈페이지로 이동.
+
+로그인 끝!
+=========================================================================================================
+개인정보 조회 <a href="/getUser.do?userId=<%=vo.getUserId() %>" target="rightFrame">개인정보조회</a>
+
+left.jsp에 개인정보 조회 버튼을 누르면 GetUserAction.java가 실행된다.
+=================
+GetUserAction.java
+=================
+execute()
+받은 파라미터값 userid로
+
+UserService userService=new UserServiceImpl();
+User user=userService.getUser(userId);
+
+UserServiceImpl에 있는 getUser() 실행
+
+public User getUser(String userId) throws Exception {
+return userDao.findUser(userId);
+}
+
+userDao에 findUser()실행 userid로 DB데이터 조회 
+갖고온값 domain.user에 적용
+
+적용된 값을 "user"에 user로 담기.
+return "forward:/user/getUser.jsp"; 이동
+
+=============
+getUser.jsp
+==============
+<%@ page import="com.model2.mvc.service.domain.User" %>
+<%User user = (User)request.getAttribute("user");%>	
+
+GetUserAction 에서 저장한 "user"에 데이터 값 갖고오기
+
+각 칼럼마다 
+user.getUserId() 식으로 domain.user에 있는 get0000()메소드로 불러오기
+
+<a href="/updateUserView.do?userId=<%=user.getUserId()%>">수정</a>
+모든 유저는 자신에 개인 정보를 수정할 수 있음.
+
+==========================================================================================
+=========================
+UpdateUserViewAction.java
+=========================
+파라미터로 받은 userId로 
+
+UserService userService=new UserServiceImpl();
+		User user=userService.getUser(userId);
+UserServiceImpl 에 있는 getUser()를 통해 
+
+public User getUser(String userId) throws Exception {
+return userDao.findUser(userId);
+}
+
+userDao.findUser() 실행 데이터세팅
+
+request.setAttribute("user", user);
+"user"로 user데이터 저장
+
+return "forward:/user/updateUser.jsp"; 이동
+
+==============
+updateUser.jsp
+==============
+
+<%@ page import="com.model2.mvc.service.domain.User" %>
+<%User user=(User)request.getAttribute("user");%>
+
+UpdateUserViewAction 에서 requestOS로 받은 "user"를 이용 유저 정보 세팅
+
+<input 	type="text" name="userName" value="<%=user.getUserName() %>"
+				
+이러한 방법으로 텍스트 입력칸에 유저정보 선표시 하기
+텍스트칸 값을 바꿔 적어 새로운 값을 세팅
+
+<a href="javascript:fncUpdateUser();">수정</a>
+document.detailForm.action='/updateUser.do';
+document.detailForm.submit(); 모든 밸류값을 키밸류로 설정
+수정 버튼을 누르면 '/updateUser.do';이동
+
+=====================
+UpdateUserAction.java
+=====================
+execute()
+String userId=(String)request.getParameter("userId");
+		User user=new User();
+		user.setUserId(userId);
+		user.setUserName(request.getParameter("userName"));
+		user.setAddr(request.getParameter("addr"));
+		user.setPhone(request.getParameter("phone"));
+		user.setEmail(request.getParameter("email"));
+
+updateUser.jsp에서 키 밸류 값으로 request에 보낸 값들로 domain.user 설정
+
+UserService userService=new UserServiceImpl();
+userService.updateUser(user);
+
+public void updateUser(User user) throws Exception {
+		userDao.updateUser(user);
+	}
+
+UserServiceImpl updateUser()에 설정한 user값을 넣어 실행
+
+userDao에 updateUser()
+
+public void updateUser(User vo) throws Exception {
+
+		Connection con = DBUtil.getConnection();
+
+		String sql = 	"UPDATE users "+
+								"SET user_name = ?, cell_phone = ? , addr = ? , email = ? "+ 
+								"WHERE user_id = ?";
+		
+		PreparedStatement pStmt = con.prepareStatement(sql);
+		pStmt.setString(1, vo.getUserName());
+		pStmt.setString(2, vo.getPhone());
+		pStmt.setString(3, vo.getAddr());
+		pStmt.setString(4, vo.getEmail());
+		pStmt.setString(5, vo.getUserId());
+		pStmt.executeUpdate();
+		
+		pStmt.close();
+		con.close();
+	}
+
+전달받은 user_id값으로 정해진 user칼럼 값들을 업데이트 및 domain.user 에 그값들을 설정
+
+HttpSession session=request.getSession();
+String sessionId=((User)session.getAttribute("user")).getUserId();
+
+if(sessionId.equals(userId)){
+			session.setAttribute("user", user);
+		}
+현재 session userId값과 수정한 userId 값이 같은지를 비교 후 세션에 다시 저장
+
+return "redirect:/getUser.do?userId="+userId;
+
+수정된 값으로 다시 개인정보 조회에 값을 넣어 보여지게 함
+
+===============================================================================================
+회원 정보 조회
+
+left.jsp 에서
+<% if(role.equals("admin")){%>
+<a href="/listUser.do" target="rightFrame">회원정보조회</a><% } %>
+
+role등급이("admin")인지 체크후 접속가능 /listUser.do" 이동
+ 
+===================
+ListUserAction.java
+===================
+
+import com.model2.mvc.common.Page;
+
+	private int currentPage;		// 현재페이지
+	private int totalCount;		// 총 게시물 수
+	private int pageUnit;			// 하단 페이지 번호 화면에 보여지는 수 //web.xml
+	private int pageSize;			// 한 페이지당 보여지는 게시물수 //web.xml
+	private int maxPage;			// 최대 페이지 번호(전체 페이지)
+	private int beginUnitPage;	//화면에 보여지는 페이지 번호의 최소수
+	private int endUnitPage;	//화면에 보여지는 페이지 번호의 최대수
+
+import com.model2.mvc.common.Search;
+
+private int curruntPage;  // 현재 페이지
+private String searchCondition; // 검색 항목 0=회원아이디,1=회원명
+private String searchKeyword; // 검색명
+private int pageSize; // 한 페이지당 보여지는 게시물 수
+
+execute()
+ListUserAction 시작
+
+Search search=new Search();
+검색 페이지를 위해 설정하기
+		
+int currentPage=1;// 리스트 페이지 1쪽 defalt페이지는 1쪽임
+
+if(request.getParameter("currentPage") != null){
+currentPage=Integer.parseInt(request.getParameter("currentPage"));
+}
+페이지가 바뀔때마다 초기화 해주는기능
+	
+search.setCurrentPage(currentPage); // 검색 후 나오는 현재페이지 쪽
+search.setSearchCondition(request.getParameter("searchCondition")); //검색 항목 설정값 가져오기
+search.setSearchKeyword(request.getParameter("searchKeyword")); // 검색 명 가져오기
+
+
+// web.xml  meta-data 로 부터 상수 추출 
+int pageSize = Integer.parseInt( getServletContext().getInitParameter("pageSize")); 
+int pageUnit  =  Integer.parseInt(getServletContext().getInitParameter("pageUnit"));
+search.setPageSize(pageSize);
+
+// Business logic 수행
+UserService userService=new UserServiceImpl();
+Map<String , Object> map=userService.getUserList(search);
+
+mvc.common.Search에 설정된 값으로 UserServiceImpl에있는 getUserList()실행
+
+public Map<String,Object> getUserList(Search search) throws Exception {
+return userDao.getUserList(search);
+}
+
+받은 값으로 userDao getUserList() 실행
+
+Map<String , Object>  map = new HashMap<String, Object>();
+
+Map(Hash Map repacktoring) 디커플링 관계를 위해 인터페이스 기반으로 Map 설정
+		
+Connection con = DBUtil.getConnection();
+		
+// Original Query 구성
+String sql = "SELECT user_id ,  user_name , email  FROM  users ";
+
+전체 유저 리스트를 갖고오기위해 Original Query 구성
+		
+if (search.getSearchCondition() != null) {
+	if ( search.getSearchCondition().equals("0") &&  !search.getSearchKeyword().equals("") ) {
+		sql += " WHERE user_id = '" + search.getSearchKeyword()+"'";
+	// 회원id로 검색을하며, 검색명이 빈칸이 아닐경우 : where user_id = ' 검색명 '
+
+	} else if ( search.getSearchCondition().equals("1") && !search.getSearchKeyword().equals("")) {
+		sql += " WHERE user_name ='" + search.getSearchKeyword()+"'";
+	// 회원 이름으로 검색을 하며, 검색명이 빈칸이 아닐 경우 : where user_name = '검색명 '
+	}
+}
+
+
+sql += " ORDER BY user_id";
+유저 아이디로 범위 좁히기
+		
+System.out.println("UserDAO::Original SQL :: " + sql);
+		
+//==> TotalCount GET
+int totalCount = this.getTotalCount(sql); // getTotalCount () 에 현재 sql 담아서 실행
+
+private int getTotalCount(String sql) throws Exception {
+// private 현재 servlet 에서만 사용하겠다는 뜻
+
+		sql = "SELECT COUNT(*) "+
+		          "FROM ( " +sql+ ") countTable";
+		
+		Connection con = DBUtil.getConnection();
+		PreparedStatement pStmt = con.prepareStatement(sql);
+		ResultSet rs = pStmt.executeQuery();
+		
+		int totalCount = 0;
+		if( rs.next() ){
+			totalCount = rs.getInt(1);
+		}
+		
+		pStmt.close();
+		con.close();
+		rs.close();
+		
+		return totalCount;
+	}
+
+private String makeCurrentPageSql(String sql , Search search){
+// private 현재 servlet 에서만 사용하겠다는 뜻
+
+		sql = 	"SELECT * "+ 
+					"FROM (		SELECT inner_table. * ,  ROWNUM AS row_seq " +
+									" 	FROM (	"+sql+" ) inner_table "+
+									"	WHERE ROWNUM <="+search.getCurrentPage()*search.getPageSize()+" ) " +
+					"WHERE row_seq BETWEEN "+((search.getCurrentPage()-1)*search.getPageSize()+1) +" AND "+search.getCurrentPage()*search.getPageSize();
+		
+		System.out.println("UserDAO :: make SQL :: "+ sql);	
+		
+		return sql;
+	}
+System.out.println("UserDAO :: totalCount  :: " + totalCount);
+sql 조회 결과 나온 모든 값을 카운트하여 몇개의 데이터가 나왔나 설정
+
+
+//==> CurrentPage 게시물만 받도록 Query 다시구성
+sql = makeCurrentPageSql(sql, search);
+PreparedStatement pStmt = con.prepareStatement(sql);
+ResultSet rs = pStmt.executeQuery();
+	
+System.out.println(search);
+
+List<User> list = new ArrayList<User>();
+
+map을 통해 리스트 형식을 보내기 위해 설정
+		
+while(rs.next()){
+	User user = new User();
+	user.setUserId(rs.getString("user_id"));
+	user.setUserName(rs.getString("user_name"));
+	user.setEmail(rs.getString("email"));
+	list.add(user); // 나온 결과들을 리스트에 저장
+}
+		
+//==> totalCount 정보 저장
+map.put("totalCount", new Integer(totalCount));
+//==> currentPage 의 게시물 정보 갖는 List 저장
+map.put("list", list);
+
+rs.close();
+pStmt.close();
+con.close();
+
+return map; // 리스트로 쏠 map 전송~!
+}
+
+Page resultPage	= 
+	new Page( currentPage, ((Integer)map.get("totalCount")).intValue(), pageUnit, pageSize);
+System.out.println("ListUserAction ::"+resultPage);
+
+//mvc.common.Page() 로직
+public Page() {
+	}
+	public Page( int currentPage, int totalCount,	int pageUnit, int pageSize ) {
+		this.totalCount = totalCount;
+		this.pageUnit = pageUnit;
+		this.pageSize = pageSize;
+		
+		this.maxPage = (pageSize == 0) ? totalCount :  (totalCount-1)/pageSize +1;
+		//최대페이지 = 한페이지당 보여지는게시물 =0 일때 true= 현재페이지 false= 현재페이지-1 나누기pageSize +1
+		this.currentPage = ( currentPage > maxPage) ? maxPage : currentPage;
+		//현재페이지 = (현재페이지 > 최대페이지) true=최대페이지, false= 현재페이지
+		this.beginUnitPage = ( (currentPage-1) / pageUnit ) * pageUnit +1 ;
+		화면에 보여지는 페이지 번호의 최소수 = ((현재페이지-1)/하단페이지보여지는수) * 하단페이지 보여지는 수 +1;
+		if( maxPage <= pageUnit ){
+			this.endUnitPage = maxPage;
+		}else{
+			this.endUnitPage = beginUnitPage + (pageUnit -1);
+			if( maxPage <= endUnitPage){
+				this.endUnitPage = maxPage;
+			}
+		}
+	}
+
+
+// 페이지 설정 값들 세팅
+
+// Model 과 View 연결 (requestOS에 설정)
+		request.setAttribute("list", map.get("list"));
+		request.setAttribute("resultPage", resultPage);
+		request.setAttribute("search", search);
+		
+
+
+return "forward:/user/listUser.jsp"; 이동
+
+=============
+listUser.jsp
+=============
+
+<%@ page import="java.util.List"  %>
+Map List로 쏜거 디커플링 위해 인터페이스 받기
+<%@ page import="com.model2.mvc.service.domain.User" %>
+도메인 vo 갖고오기
+<%@ page import="com.model2.mvc.common.Search" %>
+검색바용
+<%@page import="com.model2.mvc.common.Page"%>
+페이지에 대한 내용
+<%@page import="com.model2.mvc.common.util.CommonUtil"%>
+null값 체크
+
+<%
+	List<User> list= (List<User>)request.getAttribute("list"); // requestOS "list" 유저정보 갖고오기
+	Page resultPage=(Page)request.getAttribute("resultPage"); // requestOS "resultPage" 페이지 값 갖고오기
+	
+	Search search = (Search)request.getAttribute("search"); // requestOS "search" 검색 값 갖고오기
+	
+	//==> null 을 ""(nullString)으로 변경
+	String searchCondition = CommonUtil.null2str(search.getSearchCondition());
+	String searchKeyword = CommonUtil.null2str(search.getSearchKeyword());
+%>
+
+
+// 검색 / page 두가지 경우 모두 Form 전송을 위해 JavaScrpt 이용  
+function fncGetUserList(currentPage) {
+	document.getElementById("currentPage").value = currentPage;
+	document.detailForm.submit();		
+}
+
+<select name="searchCondition" class="ct_input_g" style="width:80px">
+	<option value="0" <%= (searchCondition.equals("0") ? "selected" : "")%>>회원ID</option>
+	<option value="1" <%= (searchCondition.equals("1") ? "selected" : "")%>>회원명</option>
+	//searchCondition 파라미터로 쏴주기 위함 밸류설정
+</select>
+<input 	type="text" name="searchKeyword" value="<%= searchKeyword %>"  class="ct_input_g" style="width:200px; height:20px" >
+	//검색창 searchKeyword 텍스트창에 검색한 값 계속 나오도록.. 화면이 바뀌어도 고정이됨 그래서 값이 유지
+
+
+// 검색 / page 두가지 경우 모두 Form 전송을 위해 JavaScrpt 이용  
+<a href="javascript:fncGetUserList('1');">검색</a>
+function fncGetUserList(currentPage) {
+		document.getElementById("currentPage").value = currentPage;
+	   	document.detailForm.submit();		
+	}
+
+전체  <%= resultPage.getTotalCount() %> 건수,	현재 <%= resultPage.getCurrentPage() %> 페이지
+"resultPage" 에 설정된 값
+
+
+<%
+for(int i=0; i<list.size(); i++) {
+	User vo = list.get(i);
+	%>
+<td align="center"><%= i + 1 %></td>
+<a href="/getUser.do?userId=<%=vo.getUserId() %>"><%= vo.getUserId() %></a>
+<%= vo.getUserName() %></td>
+<% } %>
+
+각 테이블 값 for반복문으로 설정
+
+<% if( resultPage.getCurrentPage() <= resultPage.getPageUnit() ){ %>
+		◀ 이전 
+	//현재 페이지 값이 하단에 페이지 값보다 작거나 같다면 <이전 버튼 비활성화
+<% }else{ %>
+	<a href="javascript:fncGetUserList('<%=resultPage.getCurrentPage()-1%>')">◀ 이전</a>
+	//그렇지 않다면 현재 페이지 -1 페이지로 으로 이동 
+<% } %>
+
+<%for(int i=resultPage.getBeginUnitPage();i<= resultPage.getEndUnitPage() ;i++){%>
+	<a href="javascript:fncGetUserList('<%=i %>');"><%=i %></a>
+<% }  %>
+	
+<% if( resultPage.getEndUnitPage() >= resultPage.getMaxPage() ){ %>
+	이후 ▶
+<% }else{ %>
+	<a href="javascript:fncGetUserList('<%=resultPage.getEndUnitPage()+1%>')">이후 ▶</a>
+<% } %>
+		
+==================================================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
