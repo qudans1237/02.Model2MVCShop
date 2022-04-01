@@ -23,15 +23,15 @@ public class UpdateTranCodeAction extends Action {
 		System.out.println("tranCod>>>>>>>>"+request.getParameter("tranCode"));
 		System.out.println("tranNo>>>>>>>>>>"+request.getParameter("tranNo"));
 		Search search=new Search();
-		PurchaseVO purchaseVO= new Purchase();
+		Purchase purchase= new Purchase();
 		HttpSession session = request.getSession();
 		User buyerVO = (User) session.getAttribute("user");
 //		UserVO buyerVO = new UserVO();
 //		buyerVO.setUserId(userId);
 //		purchaseVO.setBuyer(buyerVO);
 		
-		purchaseVO.setTranCode(request.getParameter("tranCode"));
-		purchaseVO.setTranNo(Integer.parseInt(request.getParameter("tranNo")));
+		purchase.setTranCode(request.getParameter("tranCode"));
+		purchase.setTranNo(Integer.parseInt(request.getParameter("tranNo")));
 	
 		int page=1;
 		if(request.getParameter("page") != null)

@@ -7,7 +7,7 @@
 <%@page import="com.model2.mvc.common.Search"%>
 <%@page import="com.model2.mvc.common.Page"%>
 <%@page import="com.model2.mvc.common.util.CommonUtil"%>
-<%@page import="java.util.HashMap"%>
+<%@page import="java.util.Map"%>
 <%
 	System.out.println("<<<<< listProduct.jsp ½ÃÀÛ >>>>>");
 

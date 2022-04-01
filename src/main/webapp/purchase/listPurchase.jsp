@@ -1,46 +1,39 @@
 <%@ page language="java" contentType="text/html; charset=EUC-KR"
     pageEncoding="EUC-KR"%>
-<%@page import="com.model2.mvc.service.domain.Purchase"%>
-<%@page import="java.util.ArrayList"%>
-<%@page import="com.model2.mvc.common.Search"%>
-<%@page import="java.util.HashMap"%>
 <%@page contentType="text/html; charset=EUC-KR"%>
 
+<%@page import="java.util.Map"%>
+<%@page import="java.util.List"%>
+
+<%@page import="com.model2.mvc.service.domain.Purchase"%>
+<%@page import="com.model2.mvc.common.util.CommonUtil"%>
+<%@page import="com.model2.mvc.common.Search"%>
+<%@page import="com.model2.mvc.common.Page"%>
 
 <%
 	System.out.println("<<<<< listPurchase.jsp 시작 >>>>>");
 	
-	HashMap<String,Object> map = (HashMap<String,Object>)request.getAttribute("map");
-	System.out.println("받은 map : " + map);
+	
+	Purchase purchase = 
 
-
+	List<Purchase> list = (List<Purchase>)request.getAttribute("list");
+	System.out.println("받은 list: "+list);
+	
+	Page resultPage=(Page)request.getAttribute("resultPage");	
+	System.out.println("받은 resultPage: "+resultPage);
+	
 	Search search = (Search)request.getAttribute("search");
-	System.out.println("받은 searchVO : " + search);
-	int total = 0;
-	ArrayList<Purchase> list = null;
-	if(map != null){
-		total = (Integer)map.get("count");
-		list  = (ArrayList<Purchase>)map.get("list");
-		
-		System.out.println("total : " + total);
-		System.out.println("list : " + list);
-	}
+	System.out.println("받은 search : " + search);
+	//==> null 을 ""(nullString)으로 변경
+	String searchCondition = CommonUtil.null2str(search.getSearchCondition());
+	String searchKeyword = CommonUtil.null2str(search.getSearchKeyword());
 	
-	int currentPage = search.getPage();
+	System.out.println("받은 searchCondition: "+ searchCondition);
+	System.out.println("받은 searchKeyword: "+ searchKeyword);
 	
-	int totalPage = 0;
+	String menu = (String)request.getAttribute("menu");
+	System.out.println("받은 menu : " + menu);
 	
-	if(total > 0) {
-		
-		totalPage = total / search.getPageUnit() ;
-		
-		if(total % search.getPageUnit() > 0) {
-			totalPage += 1;
-		}
-	}
-	
-	System.out.println("currentPage : " + currentPage);
-	System.out.println("totalPage : " + totalPage);
 %>
 
 <html>
@@ -50,9 +43,10 @@
 <link rel="stylesheet" href="/css/admin.css" type="text/css">
 
 <script type="text/javascript">
-	function fncGetUserList() {
-		document.detailForm.submit();
-	}
+function fncGetUserList(currentPage) {
+	document.getElementById("currentPage").value = currentPage;
+   	document.detailForm.submit();		
+}
 </script>
 </head>
 
@@ -76,9 +70,38 @@
 	</tr>
 </table>
 
+<table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top:10px;">
+	<tr>
+	<td align="right">
+			<select name="searchCondition" class="ct_input_g" style="width:80px">
+				<option value="0" <%= (searchCondition.equals("0") ? "selected" : "")%>>회원ID</option>
+				<option value="1" <%= (searchCondition.equals("1") ? "selected" : "")%>>회원명</option>
+			</select>
+			<input 	type="text" name="searchKeyword" value="<%= searchKeyword %>"  class="ct_input_g" 
+							style="width:200px; height:20px" >
+		</td>
+		
+		<td align="right" width="70">
+			<table border="0" cellspacing="0" cellpadding="0">
+				<tr>
+					<td width="17" height="23">
+						<img src="/images/ct_btnbg01.gif" width="17" height="23">
+					</td>
+					<td background="/images/ct_btnbg02.gif" class="ct_btn01" style="padding-top:3px;">
+						<a href="javascript:fncGetPurchaseList();">검색</a>
+					</td>
+					<td width="14" height="23">
+						<img src="/images/ct_btnbg03.gif" width="14" height="23">
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+
 <table width="100%" border="0" cellspacing="0" cellpadding="0"	style="margin-top: 10px;">
 	<tr>
-		<td colspan="11">전체 <%=totalPage %> 건수, 현재 <%=currentPage %> 페이지</td>
+		<td colspan="11">전체  <%= resultPage.getTotalCount() %> 건수,	현재 <%= resultPage.getCurrentPage() %> 페이지</td>
 	</tr>
 	<tr>
 		<td class="ct_list_b" width="100">No</td>
@@ -97,10 +120,9 @@
 		<td colspan="11" bgcolor="808285" height="1"></td>
 	</tr>
 	
-	<% 	
-		int no = list.size();
-		for (int i=0; i<list.size(); i++) {
-			Purchase purchase = (Purchase)list.get(i);
+	<%
+		for(int i=0; i<list.size(); i++) {
+			Purchase product = (Purchase)list.get(i);
 	%>
 	
 	<tr class="ct_list_pop">
@@ -135,15 +157,26 @@
 </table>
 
 
-<table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 10px;">
+<table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top:10px;">
 	<tr>
 		<td align="center">
-		 
-		<% for(int i=1; i<=totalPage; i++){ %>	
-			<a href="/listPurchase.do?page=<%=i%>"><%=i%></a>
-		<% } %>
-		
-		</td>
+		<input type="hidden" id="currentPage" name="currentPage" value=""/>
+			<% if( resultPage.getCurrentPage() <= resultPage.getPageUnit() ){ %>
+					◀ 이전
+			<% }else{ %>
+					<a href="javascript:fncGetUserList('<%=resultPage.getCurrentPage()-1%>')">◀ 이전</a>
+			<% } %>
+
+			<%	for(int i=resultPage.getBeginUnitPage();i<= resultPage.getEndUnitPage() ;i++){	%>
+					<a href="javascript:fncGetUserList('<%=i %>');"><%=i %></a>
+			<% 	}  %>
+	
+			<% if( resultPage.getEndUnitPage() >= resultPage.getMaxPage() ){ %>
+					이후 ▶
+			<% }else{ %>
+					<a href="javascript:fncGetUserList('<%=resultPage.getEndUnitPage()+1%>')">이후 ▶</a>
+			<% } %>
+    	</td>
 	</tr>
 </table>
 
