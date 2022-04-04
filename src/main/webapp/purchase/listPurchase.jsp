@@ -1,29 +1,25 @@
 <%@ page language="java" contentType="text/html; charset=EUC-KR"
     pageEncoding="EUC-KR"%>
-<%@page contentType="text/html; charset=EUC-KR"%>
 
-<%@page import="java.util.Map"%>
-<%@page import="java.util.List"%>
-
-<%@page import="com.model2.mvc.service.domain.Purchase"%>
-<%@page import="com.model2.mvc.common.util.CommonUtil"%>
-<%@page import="com.model2.mvc.common.Search"%>
+<%@ page import="java.util.List"  %>
+<%@ page import="java.util.Map"  %>
+<%@ page import="com.model2.mvc.service.domain.Purchase" %>
+<%@page import="com.model2.mvc.common.Search" %>
 <%@page import="com.model2.mvc.common.Page"%>
+<%@page import="com.model2.mvc.common.util.CommonUtil"%>
+
 
 <%
-	System.out.println("<<<<< listPurchase.jsp 시작 >>>>>");
-	
-	
-	Purchase purchase = 
-
-	List<Purchase> list = (List<Purchase>)request.getAttribute("list");
+	List<Purchase> list= (List<Purchase>)request.getAttribute("list");
 	System.out.println("받은 list: "+list);
+	
+	Map<String,Object> map=(Map<String,Object>)request.getAttribute("map");
+	Search search=(Search)request.getAttribute("search");
+	System.out.println("받은 search : " + search);
 	
 	Page resultPage=(Page)request.getAttribute("resultPage");	
 	System.out.println("받은 resultPage: "+resultPage);
 	
-	Search search = (Search)request.getAttribute("search");
-	System.out.println("받은 search : " + search);
 	//==> null 을 ""(nullString)으로 변경
 	String searchCondition = CommonUtil.null2str(search.getSearchCondition());
 	String searchKeyword = CommonUtil.null2str(search.getSearchKeyword());
@@ -36,6 +32,8 @@
 	
 %>
 
+
+
 <html>
 <head>
 <title>구매 목록조회</title>
@@ -43,7 +41,7 @@
 <link rel="stylesheet" href="/css/admin.css" type="text/css">
 
 <script type="text/javascript">
-function fncGetUserList(currentPage) {
+	function fncGetUserList(currentPage) {
 	document.getElementById("currentPage").value = currentPage;
    	document.detailForm.submit();		
 }
@@ -51,7 +49,6 @@ function fncGetUserList(currentPage) {
 </head>
 
 <body bgcolor="#ffffff" text="#000000">
-
 <div style="width: 98%; margin-left: 10px;">
 
 <form name="detailForm" action="/listUser.do" method="post">
@@ -70,38 +67,11 @@ function fncGetUserList(currentPage) {
 	</tr>
 </table>
 
-<table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top:10px;">
-	<tr>
-	<td align="right">
-			<select name="searchCondition" class="ct_input_g" style="width:80px">
-				<option value="0" <%= (searchCondition.equals("0") ? "selected" : "")%>>회원ID</option>
-				<option value="1" <%= (searchCondition.equals("1") ? "selected" : "")%>>회원명</option>
-			</select>
-			<input 	type="text" name="searchKeyword" value="<%= searchKeyword %>"  class="ct_input_g" 
-							style="width:200px; height:20px" >
-		</td>
-		
-		<td align="right" width="70">
-			<table border="0" cellspacing="0" cellpadding="0">
-				<tr>
-					<td width="17" height="23">
-						<img src="/images/ct_btnbg01.gif" width="17" height="23">
-					</td>
-					<td background="/images/ct_btnbg02.gif" class="ct_btn01" style="padding-top:3px;">
-						<a href="javascript:fncGetPurchaseList();">검색</a>
-					</td>
-					<td width="14" height="23">
-						<img src="/images/ct_btnbg03.gif" width="14" height="23">
-					</td>
-				</tr>
-			</table>
-		</td>
-	</tr>
-</table>
-
 <table width="100%" border="0" cellspacing="0" cellpadding="0"	style="margin-top: 10px;">
 	<tr>
-		<td colspan="11">전체  <%= resultPage.getTotalCount() %> 건수,	현재 <%= resultPage.getCurrentPage() %> 페이지</td>
+		<td colspan="11" >
+			전체  <%= resultPage.getTotalCount() %> 건수,	현재 <%= resultPage.getCurrentPage() %> 페이지
+		</td>
 	</tr>
 	<tr>
 		<td class="ct_list_b" width="100">No</td>
@@ -119,45 +89,53 @@ function fncGetUserList(currentPage) {
 	<tr>
 		<td colspan="11" bgcolor="808285" height="1"></td>
 	</tr>
-	
 	<%
 		for(int i=0; i<list.size(); i++) {
-			Purchase product = (Purchase)list.get(i);
+			Purchase purchase = (Purchase)list.get(i);
 	%>
-	
+
 	<tr class="ct_list_pop">
-		<td align="center">
-			<a href="/getPurchase.do?tranNo=<%=purchase.getTranNo()%>"><%=no--%></a>
-		</td>
+		<td align="center"><%=i + 1 %></td>
 		<td></td>
 		<td align="left">
-			<a href="/getUser.do?userId=<%=purchase.getBuyer().getUserId() %>"><%=purchase.getBuyer().getUserId() %></a>
+			<a href="/getUser.do?userId=<%=purchase.getBuyer().getUserId()%>"><%=purchase.getBuyer().getUserId()%></a>
 		</td>
 		<td></td>
 		<td align="left"><%=purchase.getReceiverName() %></td>
 		<td></td>
 		<td align="left"><%=purchase.getReceiverPhone() %></td>
 		<td></td>
+		<td align="left">현재
+		<% 
+				
+				if(purchase.getTranCode().equals("1  ")){%>
+					구매완료
+				<%}else if(purchase.getTranCode().equals("001")) {%>
+					구매완료
+				<%}else if(purchase.getTranCode().equals("002")) {%>
+					판매중
+				<%}else if(purchase.getTranCode().equals("003")) {%>
+					배송완료 
+				<%}else%>
+					
+				상태 입니다.</td>
+				
+		<td>
+		 
+		 </td>
 		<td align="left">
-		<% if (purchase.getTranCode().trim().equals("001")) { %>
-			현재 구매완료 상태 입니다.
-		<% }else if (purchase.getTranCode().trim().equals("002")) { %>
-			현재 배송중 상태 입니다. <a href="/updateTranCode.do?tranNo=<%=purchase.getTranNo()%>&tranCode=003&page=<%=currentPage%>">물건도착</a>
-		<% }else if (purchase.getTranCode().trim().equals("003")) { %>
-			현재 배송완료 상태 입니다.
-		<% } %>
+			<%if(purchase.getTranCode().equals("002")){ %><a href="/updateTranCode.do?tranNo=<%=purchase.getTranNo() %>&tranCode=003">상품도착
+			</a>
+		 <%} %>
 		</td>
-		<td></td>
-		
 	</tr>
 	<tr>
 		<td colspan="11" bgcolor="D6D7D6" height="1"></td>
 	</tr>
-	<% } %>
+	<%} %>
 </table>
 
-
-<table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top:10px;">
+<table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 10px;">
 	<tr>
 		<td align="center">
 		<input type="hidden" id="currentPage" name="currentPage" value=""/>

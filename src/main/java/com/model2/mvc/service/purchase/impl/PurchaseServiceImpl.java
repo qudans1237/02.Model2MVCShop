@@ -14,17 +14,16 @@ public class PurchaseServiceImpl implements PurchaseService {
 	public PurchaseServiceImpl() {
 		purchaseDAO = new PurchaseDAO();
 	}
-
 	public void addPurchase(Purchase purchase) throws Exception {
 		purchaseDAO.insertPurchase(purchase);
-
 	}
-
+	
 	public Purchase getPurchase(int tranNo) throws Exception {
-	return purchaseDAO.findPurchase(tranNo);
+		return purchaseDAO.findPurchase(tranNo);
 	}
 
 	public Purchase getPurchase2(int ProdNo) throws Exception {
+		System.out.println("Impl 받은 ProdNO"+ProdNo);
 		return purchaseDAO.findPurchase2(ProdNo);
 	}
 
@@ -42,6 +41,7 @@ public class PurchaseServiceImpl implements PurchaseService {
 	}
 
 	public void updateTranCode(Purchase purchase) throws Exception {
+		System.out.println("Impl 받은 updateTranCode: "+purchase);
 		purchaseDAO.updateTranCode(purchase);
 
 	}

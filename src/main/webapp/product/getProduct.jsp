@@ -11,24 +11,6 @@
 	String menu = (String)request.getParameter("menu");
 	System.out.println("받은 menu : " + menu);
 	
-	String prvHistory = "";
-	
-	for (Cookie c:request.getCookies()){
-		if (c.getName().equals("history")){
-			prvHistory=c.getValue();
-			System.out.println("getProduct: "+ prvHistory);			
-		}
-	}
-	// Cookie는 Request, Response를 가지고 불러오기 또는 전달이 이루어진다.
-	// 현재 Project에서 사용되는 Cookie의 구조는 Key "history", value: prodNo이면서 각 ProdNo은 , 로 구분 되어있음.
-	int prodNo= product.getProdNo();
-	System.out.println("getProduct: "+ prvHistory);
-	System.out.println("getProduct: "+ prodNo+","+prvHistory);
-	Cookie cookie = new Cookie("history", prodNo+","+prvHistory);	// 쿠키 생성
-	cookie.setMaxAge(60*60);	// 헌재 Cookie의 유지기간
-	response.addCookie(cookie);
-	
-	
 %>
 <!DOCTYPE html>
 <html>
@@ -186,7 +168,7 @@ function fncAddProduct(){
 					<img src="/images/ct_btnbg01.gif" width="17" height="23"/>
 				</td>	
 				<td background="/images/ct_btnbg02.gif" class="ct_btn01" style="padding-top: 3px;">
-					<a href="/addPurchaseView.do?prod_no=<%=product.getProdNo() %>">구매</a>
+					<a href="/addPurchaseView.do?prodNo=<%=product.getProdNo() %>">구매</a>
 				</td>
 				<td width="14" height="23">
 					<img src="/images/ct_btnbg03.gif" width="14" height="23">

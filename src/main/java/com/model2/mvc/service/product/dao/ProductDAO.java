@@ -89,21 +89,21 @@ public class ProductDAO {
 		
 		Connection con = DBUtil.getConnection();
 		
-		String sql = "SELECT * FROM product ";
+		String sql = "select v.* FROM (select rownum rnum, vr.*,TRAN_STATUS_CODE from PRODUCT vr,transaction t where ";
 		
 		//SearchCondition에 값이 있을 경우
 		if (search.getSearchCondition() != null) {
 			if ( search.getSearchCondition().equals("0") &&  !search.getSearchKeyword().equals("") ) {
-				sql += " WHERE prod_no LIKE '%" + search.getSearchKeyword() + "%'";
+				sql += " prod_no LIKE '%" + search.getSearchKeyword() + "%'";
 			} else if (search.getSearchCondition().equals("1")&&  !search.getSearchKeyword().equals("") ) {
-				sql += " WHERE prod_name LIKE '%" + search.getSearchKeyword() + "%'";
+				sql += " prod_name LIKE '%" + search.getSearchKeyword() + "%'";
 			} else if (search.getSearchCondition().equals("2")&&  !search.getSearchKeyword().equals("") ) {
-				sql += " WHERE price LIKE '%" + search.getSearchKeyword() + "%'";
+				sql += " price LIKE '%" + search.getSearchKeyword() + "%'";
 			}
 		}
-		sql += " ORDER BY prod_no";
-		
-		System.out.println("ProductDao::Original SQL :: "+ sql);
+		sql += " vr.prod_no = t.prod_no(+)";
+		sql += " order by vr.PROD_NO) v";
+		System.out.println("ProductDAO: "+ sql);
 		
 		int totalCount = this.getTotalCount(sql);
 		System.out.println("UserDAO :: totalCount  :: " + totalCount);
@@ -126,6 +126,7 @@ public class ProductDAO {
 			product.setPrice(rs.getInt("price"));
 			product.setFileName(rs.getString("image_file"));
 			product.setRegDate(rs.getDate("reg_date"));
+			product.setProTranCode(rs.getString("TRAN_STATUS_CODE"));
 			list.add(product);
 		}
 		

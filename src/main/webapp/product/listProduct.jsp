@@ -29,6 +29,7 @@
 	String menu = (String)request.getAttribute("menu");
 	System.out.println("받은 menu : " + menu);
 	
+	
 %>
 
 
@@ -150,7 +151,34 @@
 		<td></td>
 		<td align="left"><%= product.getRegDate() %></td>
 		<td></td>
-		<td align="left"><%= product.getProTranCode() %></td>	
+		<%if(menu.equals("manage")){%>
+		<td align="left">
+						<%System.out.println(product.getProTranCode());
+						if(product.getProTranCode()==null){%>
+						판매중
+						<%}else if(product.getProTranCode().equals("002")){ %>
+						배송중
+						<%}else if(product.getProTranCode().equals("001")){ %>
+						구매완료 <a href="/updateTranCodeByProd.do?prodNo=<%=product.getProdNo() %>&tranCode=002">배송하기
+						</a>
+						<%}else if(product.getProTranCode().equals("003")){ %>
+						문앞 확인바람
+						<%} %>
+					</td>
+		<%}else{	%>
+						<td align="left">
+						<%if(product.getProTranCode()==null){ %>
+						판매중
+						<%}else if(product.getProTranCode().equals("001")){ %>
+						구매완료
+						<%}else if(product.getProTranCode().equals("002")){ %>
+						배송중 <a href="/updateTranCodeByProd.do?prodNo=<%=product.getProdNo() %>&tranCode=003">상품받기
+						</a>
+						<%}else if(product.getProTranCode().equals("003")){ %>
+						배송완료
+						<%} %>
+					</td>
+		<%} %>	
 	</tr>			
 	<tr>
 		<td colspan="11" bgcolor="D6D7D6" height="1"></td>

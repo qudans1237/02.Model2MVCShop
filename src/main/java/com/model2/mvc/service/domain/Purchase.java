@@ -92,7 +92,7 @@ public class Purchase {
 	
 	@Override
 	public String toString() {
-		return "PurchaseVO [buyer=" + buyer + ", divyAddr=" + divyAddr
+		return "Purchase [buyer=" + buyer + ", divyAddr=" + divyAddr
 				+ ", divyDate=" + divyDate + ", divyRequest=" + divyRequest
 				+ ", orderDate=" + orderDate + ", paymentOption="
 				+ paymentOption + ", purchaseProd=" + purchaseProd

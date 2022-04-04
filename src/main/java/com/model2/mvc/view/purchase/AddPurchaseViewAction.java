@@ -19,9 +19,8 @@ public class AddPurchaseViewAction extends Action {
 
 	@Override
 	public String execute(HttpServletRequest request, HttpServletResponse response) throws Exception {
-		// TODO Auto-generated method stub
-		System.out.println("jasdlfj"+request.getParameter("prodNo"));
-int prodNo=Integer.parseInt(request.getParameter("prodNo"));
+		System.out.println("¹ÞÀº prodNO :"+request.getParameter("prodNo"));
+		int prodNo=Integer.parseInt(request.getParameter("prodNo"));
 		
 		ProductService service=new ProductServiceImpl();
 		Product product=service.getProduct(prodNo);

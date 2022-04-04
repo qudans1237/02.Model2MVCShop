@@ -14,12 +14,11 @@ import com.model2.mvc.service.domain.User;
 public class AddPurchaseAction extends Action {
 
 	public AddPurchaseAction() {
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
 	public String execute(HttpServletRequest request, HttpServletResponse response) throws Exception {
-		// TODO Auto-generated method stub
+		
 		Purchase purchase = new Purchase();
 		User user = new User();
 		//ProductVO productVO = new ProductVO();

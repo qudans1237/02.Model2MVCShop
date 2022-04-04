@@ -65,7 +65,9 @@ public class PurchaseDAO {
 	public Purchase findPurchase2(int prodNo) throws Exception {
 		Connection con = DBUtil.getConnection();
 
-		String sql = "select t.tran_no " + "from transaction t, product p " + "where t.prod_no = p.prod_no "
+		String sql = "select t.tran_no "
+				+ "from transaction t, product p "
+				+ "where t.prod_no = p.prod_no "
 				+ "and p.prod_no = ? ";
 		PreparedStatement stmt = con.prepareStatement(sql);
 		stmt.setInt(1, prodNo);
@@ -82,7 +84,7 @@ public class PurchaseDAO {
 	}
 
 public Map<String, Object> getPurchaseList(Search search,String buyerId) throws Exception {
-	System.out.println("<<<<< PurchaseDao : getPurcaseList() 시작 >>>>>");
+	System.out.println("============ PurchaseDao : getPurcaseList() 시작 =========");
 	System.out.println("받은 search : " + search);
 	System.out.println("받은 buyerId : " + buyerId);
 	
@@ -92,22 +94,20 @@ public Map<String, Object> getPurchaseList(Search search,String buyerId) throws 
 		Connection con = DBUtil.getConnection();
 		
 		String sql = "select "
-				+ "t.tran_no, p.prod_no,u.user_id,t.receiver_name,t.receiver_phone,t.tran_status_code "
-				+ "from transaction t,product p,users u "
-				+ "where t.prod_no=p.prod_no "
-				+ "	and t.buyer_id=u.user_id "
-				+ "	and u.user_id=? ";
-		
+				+ "t.tran_no, p.prod_no,u.user_id,t.receiver_name,t.receiver_phone,t.tran_status_code from transaction t,product p,users u where ";
 		//SearchCondition에 값이 있을 경우
 		if (search.getSearchCondition() != null) {
 			if ( search.getSearchCondition().equals("0") &&  !search.getSearchKeyword().equals("") ) {
-				sql += " and t.buyer_id LIKE '%" + search.getSearchKeyword() + "%'";
+				sql += " t.buyer_id LIKE '%" + search.getSearchKeyword() + "%'";
 			} else if (search.getSearchCondition().equals("1")&&  !search.getSearchKeyword().equals("") ) {
-				sql += " and u.user_name LIKE '%" + search.getSearchKeyword() + "%'";
+				sql += " u.user_name LIKE '%" + search.getSearchKeyword() + "%'";
 			}		
 		}
-		sql += " ORDER BY t.tran_no";
-		System.out.println("sql print"+sql);
+		sql += "t.prod_no=p.prod_no(+) ";
+		sql +="	and t.buyer_id=u.user_id ";
+		sql +="	and u.user_id=?";
+		sql +=" ORDER BY t.tran_no";
+		System.out.println("sql print :"+sql);
 		
 		int totalCount = this.getTotalCount(sql);
 		System.out.println("UserDAO :: totalCount  :: " + totalCount);
@@ -284,12 +284,12 @@ public Map<String, Object> getPurchaseList(Search search,String buyerId) throws 
 	}
 
 	public void updateTranCode(Purchase purchase) throws Exception {
-
+		System.out.println("============DAO UPDATETRANCODE 시작===================");
 		Connection con = DBUtil.getConnection();
 
 		String sql = "update TRANSACTION set TRAN_STATUS_CODE=? where Tran_No=?";
-		System.out.println("update>" + sql);
-		System.out.println("purchase" + purchase);
+		System.out.println("update sql문" + sql);
+		System.out.println("purchase : " + purchase);
 		PreparedStatement stmt = con.prepareStatement(sql);
 		stmt.setString(1, purchase.getTranCode());
 		stmt.setInt(2, purchase.getTranNo());
@@ -298,6 +298,7 @@ public Map<String, Object> getPurchaseList(Search search,String buyerId) throws 
 			System.out.println("성공");
 		}
 		con.close();
+		System.out.println("============DAO UPDATETRANCODE 종료===================");
 	}
 	
 	private int getTotalCount(String sql) throws Exception {
