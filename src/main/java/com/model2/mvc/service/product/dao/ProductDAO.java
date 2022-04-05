@@ -13,6 +13,7 @@ import com.model2.mvc.common.Search;
 import com.model2.mvc.common.util.DBUtil;
 import com.model2.mvc.service.domain.Product;
 import com.model2.mvc.service.purchase.PurchaseService;
+import com.model2.mvc.service.purchase.impl.PurchaseServiceImpl;
 //import com.model2.mvc.service.purchase.impl.PurchaseServiceImpl;
 import com.model2.mvc.service.domain.User;
 
@@ -85,64 +86,77 @@ public class ProductDAO {
 		System.out.println("<<<<< ProductDAO : getProductList() 시작 >>>>>");
 		System.out.println("받은 search : " + search);
 		
-		Map<String,Object> map = new HashMap<String,Object>();
-		
 		Connection con = DBUtil.getConnection();
 		
-		String sql = "select v.* FROM (select rownum rnum, vr.*,TRAN_STATUS_CODE from PRODUCT vr,transaction t where ";
+		String sql = "select v.* from (select rownum rnum, vr.*,TRAN_STATUS_CODE from PRODUCT vr,transaction t where";
 		
 		//SearchCondition에 값이 있을 경우
 		if (search.getSearchCondition() != null) {
 			if ( search.getSearchCondition().equals("0") &&  !search.getSearchKeyword().equals("") ) {
-				sql += " prod_no LIKE '%" + search.getSearchKeyword() + "%'";
-			} else if (search.getSearchCondition().equals("1")&&  !search.getSearchKeyword().equals("") ) {
-				sql += " prod_name LIKE '%" + search.getSearchKeyword() + "%'";
-			} else if (search.getSearchCondition().equals("2")&&  !search.getSearchKeyword().equals("") ) {
-				sql += " price LIKE '%" + search.getSearchKeyword() + "%'";
+				sql += " prod_no LIKE '%" + search.getSearchKeyword() +"%'and";
+			} else if (search.getSearchCondition().equals("1") && !search.getSearchKeyword().equals("")) {
+				sql += " prod_name LIKE '%" + search.getSearchKeyword() +"%' and";
+			} else if (search.getSearchCondition().equals("2") && !search.getSearchKeyword().equals("")) {
+				sql += " price LIKE '%" + search.getSearchKeyword() +"%' and";
 			}
 		}
 		sql += " vr.prod_no = t.prod_no(+)";
-		sql += " order by vr.PROD_NO) v";
-		System.out.println("ProductDAO: "+ sql);
+		sql += " ORDER BY vr.PROD_NO) v";
 		
+		//getTotalCount() 메소드 실행 (this. 생략가능)
 		int totalCount = this.getTotalCount(sql);
-		System.out.println("UserDAO :: totalCount  :: " + totalCount);
+		System.out.println("totalCount : " + totalCount);
 		
-		sql = makeCurrentPageSql(sql, search);
+		//CurrentPage 게시물만 받도록 Query 다시구성
+		//makeCurrentPageSql() 메소드 실행 (this. 생략가능)
+		sql = this.makeCurrentPageSql(sql, search);
+		
 		PreparedStatement pStmt = con.prepareStatement(sql);
 		ResultSet rs = pStmt.executeQuery();
-		
 		System.out.println("sql 전송완료 : " + sql);
-		System.out.println(search);
-		
+
+		//HashMap<String,Object> , ArrayList<Product> 인스턴스 생성
+		Map<String,Object> map = new HashMap<String,Object>();
 		List<Product> list = new ArrayList<Product>();
 		
-		while(rs.next()){
+		PurchaseService service = new PurchaseServiceImpl();
+		
+		while (rs.next()) {
 			Product product = new Product();
-			product.setProdNo(rs.getInt("prod_no"));
-			product.setProdName(rs.getString("prod_name"));
-			product.setProdDetail(rs.getString("prod_detail"));
-			product.setManuDate(rs.getString("manufacture_day"));
-			product.setPrice(rs.getInt("price"));
-			product.setFileName(rs.getString("image_file"));
-			product.setRegDate(rs.getDate("reg_date"));
-			product.setProTranCode(rs.getString("TRAN_STATUS_CODE"));
+			product.setProdNo(rs.getInt("PROD_NO"));
+			product.setProdName(rs.getString("PROD_NAME"));
+			product.setProdDetail(rs.getString("PROD_DETAIL"));
+			product.setManuDate(rs.getString("MANUFACTURE_DAY"));
+			product.setPrice(rs.getInt("PRICE"));
+			product.setFileName(rs.getString("IMAGE_FILE"));
+			product.setRegDate(rs.getDate("REG_DATE"));
+			product.setProTranCode(rs.getString("TRAN_STATUS_CODE"));	
 			list.add(product);
+//			if (!rs.next()) {
+//				break;
+//			}
+			System.out.println("product 셋팅완료 : " + product);	
 		}
 		
-		//==> totalCount 정보 저장
+		//totalCount 정보 저장
 		map.put("totalCount", new Integer(totalCount));
-		//==> currentPage 의 게시물 정보 갖는 List 저장
+		System.out.println("map에 totalCount 추가 : " + map);
+		
+		//currentPage 의 게시물 정보 갖는 List 저장
 		map.put("list", list);
-		System.out.println("map.put list"+list);
+		System.out.println("map에 list 추가 : " + map);
+		
+		System.out.println("list.size() : " + list.size()); 
+		System.out.println("map.size() : " + map.size()); 
 		
 		rs.close();
 		pStmt.close();
 		con.close();
 		
 		System.out.println("<<<<< ProductDAO : getProductList() 종료 >>>>>");
-
+		
 		return map;
+	}
 		
 //		PreparedStatement pStmt = con.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE,
 //														    ResultSet.CONCUR_UPDATABLE);
@@ -192,7 +206,7 @@ public class ProductDAO {
 //		System.out.println("list.size() : " + list.size()); 
 //		System.out.println("map.size() : " + map.size()); 
 
-	}
+
 	
 	
 	//상품정보 수정을 위한 DBMS를 수행
@@ -248,7 +262,7 @@ public class ProductDAO {
 						"FROM (		SELECT inner_table. * ,  ROWNUM AS row_seq " +
 										" 	FROM (	"+sql+" ) inner_table "+
 										"	WHERE ROWNUM <="+search.getCurrentPage()*search.getPageSize()+" ) " +
-						"WHERE row_seq BETWEEN "+((search.getCurrentPage()-1)*search.getPageSize()+1) +" AND "+search.getCurrentPage()*search.getPageSize();
+						" WHERE row_seq BETWEEN "+((search.getCurrentPage()-1)*search.getPageSize()+1) +" AND "+search.getCurrentPage()*search.getPageSize();
 			
 			System.out.println("UserDAO :: make SQL :: "+ sql);	
 			

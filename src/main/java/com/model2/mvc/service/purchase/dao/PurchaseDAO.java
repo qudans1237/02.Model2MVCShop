@@ -3,6 +3,7 @@ package com.model2.mvc.service.purchase.dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,6 +14,8 @@ import com.model2.mvc.common.util.DBUtil;
 import com.model2.mvc.service.domain.Product;
 import com.model2.mvc.service.domain.Purchase;
 import com.model2.mvc.service.domain.User;
+import com.model2.mvc.service.user.UserService;
+import com.model2.mvc.service.user.impl.UserServiceImpl;
 
 public class PurchaseDAO {
 
@@ -83,70 +86,64 @@ public class PurchaseDAO {
 		return purchase;
 	}
 
-public Map<String, Object> getPurchaseList(Search search,String buyerId) throws Exception {
-	System.out.println("============ PurchaseDao : getPurcaseList() 시작 =========");
-	System.out.println("받은 search : " + search);
-	System.out.println("받은 buyerId : " + buyerId);
-	
-	
-		Map<String,Object> map = new HashMap<String,Object>();
+	public Map<String,Object> getPurchaseList(Search search, String buyerId) throws Exception {
+		System.out.println("<<<<< PurchaseDAO : getPurchaseList() 시작 >>>>>");
+		System.out.println("받은 search : " + search);
+		System.out.println("받은 buyerId : " + buyerId);
+		
+		String sql = "SELECT * FROM transaction WHERE buyer_id='" + buyerId +"'";
+
+		//getTotalCount() 메소드 실행 (this. 생략가능)
+		int totalCount = this.getTotalCount(sql);
+		System.out.println("totalCount : " + totalCount);
+				
+		//CurrentPage 게시물만 받도록 Query 다시구성
+		//makeCurrentPageSql() 메소드 실행 (this. 생략가능)
+		sql = this.makeCurrentPageSql(sql, search);
 		
 		Connection con = DBUtil.getConnection();
 		
-		String sql = "select "
-				+ "t.tran_no, p.prod_no,u.user_id,t.receiver_name,t.receiver_phone,t.tran_status_code from transaction t,product p,users u where ";
-		//SearchCondition에 값이 있을 경우
-		if (search.getSearchCondition() != null) {
-			if ( search.getSearchCondition().equals("0") &&  !search.getSearchKeyword().equals("") ) {
-				sql += " t.buyer_id LIKE '%" + search.getSearchKeyword() + "%'";
-			} else if (search.getSearchCondition().equals("1")&&  !search.getSearchKeyword().equals("") ) {
-				sql += " u.user_name LIKE '%" + search.getSearchKeyword() + "%'";
-			}		
-		}
-		sql += "t.prod_no=p.prod_no(+) ";
-		sql +="	and t.buyer_id=u.user_id ";
-		sql +="	and u.user_id=?";
-		sql +=" ORDER BY t.tran_no";
-		System.out.println("sql print :"+sql);
+		Statement stmt = con.createStatement();
 		
-		int totalCount = this.getTotalCount(sql);
-		System.out.println("UserDAO :: totalCount  :: " + totalCount);
-						
-		sql = makeCurrentPageSql(sql, search);
-		PreparedStatement pStmt = con.prepareStatement(sql);
-		pStmt.setString(1, buyerId);
-		ResultSet rs = pStmt.executeQuery();
+		ResultSet rs = stmt.executeQuery(sql);
+		System.out.println("sql 전송완료 : " + sql);
 		
-		System.out.println(buyerId);
-		System.out.println("stmt print "+sql);
-		
+		Map<String,Object> map = new HashMap<String,Object>();
 		List<Purchase> list = new ArrayList<Purchase>();
 		
-		while(rs.next()){
-			Purchase purchase = new Purchase();
-			User user = new User();
-			purchase.setTranNo(rs.getInt("t.tran_no"));
-			user.setUserId(rs.getString("user_id"));
+		Purchase purchase = null;
+		UserService service = new UserServiceImpl();
+		
+		while (rs.next()) {
+			purchase = new Purchase();
+			
 			purchase.setReceiverName(rs.getString("receiver_name"));
-			purchase.setTranNo(rs.getInt("tran_no"));
 			purchase.setReceiverPhone(rs.getString("receiver_phone"));
+			purchase.setTranNo(rs.getInt("tran_no"));
 			purchase.setTranCode(rs.getString("tran_status_code"));
+			purchase.setBuyer(service.getUser(rs.getString("buyer_id")));
+				
 			list.add(purchase);
-			if (!rs.next()) { 
-				break;
-			}
+			
+//			if (!rs.next()) {
+//				break;
+//			}
+			System.out.println("purchase 셋팅완료 : " + purchase);
 		}
-		//==> totalCount 정보 저장
-		map.put("totalCount", new Integer(totalCount));
-		//==> currentPage 의 게시물 정보 갖는 List 저장
+		map.put("totalCount", totalCount);
 		map.put("list", list);
-		System.out.println("map.put list"+list);
+		System.out.println("map에 totalCount 추가 : " + map);
+		System.out.println("map에 list 추가 : " + map);
+		
+		System.out.println("list.size() : " + list.size()); 
+		System.out.println("map.size() : " + map.size());
 		
 		rs.close();
-		pStmt.close();
+		stmt.close();
 		con.close();
 		
 		System.out.println("<<<<< PurchaseDAO : getPurchaseList() 종료 >>>>>");
+		
 		return map;
 	}
 
@@ -165,6 +162,7 @@ public Map<String, Object> getPurchaseList(Search search,String buyerId) throws 
 		}
 		sql += " order by USER_ID";
 		int totalCount = this.getTotalCount(sql);
+		
 		System.out.println("UserDAO :: totalCount  :: " + totalCount);
 						
 		sql = makeCurrentPageSql(sql, search);
@@ -324,11 +322,10 @@ public Map<String, Object> getPurchaseList(Search search,String buyerId) throws 
 	
 	// 게시판 currentPage Row 만  return 
 	private String makeCurrentPageSql(String sql , Search search){
-		sql = 	"SELECT * "+ 
-					"FROM (		SELECT inner_table. * ,  ROWNUM AS row_seq " +
+		sql = 	"SELECT * FROM (		SELECT inner_table. * ,  ROWNUM AS row_seq " +
 									" 	FROM (	"+sql+" ) inner_table "+
-									"	WHERE ROWNUM <="+search.getCurrentPage()*search.getPageSize()+" ) " +
-					"WHERE row_seq BETWEEN "+((search.getCurrentPage()-1)*search.getPageSize()+1) +" AND "+search.getCurrentPage()*search.getPageSize();
+									"	WHERE ROWNUM <="+search.getCurrentPage()*search.getPageSize()+")"+ 
+					" WHERE row_seq BETWEEN "+((search.getCurrentPage()-1)*search.getPageSize()+1) +" AND "+search.getCurrentPage()*search.getPageSize();
 		
 		System.out.println("UserDAO :: make SQL :: "+ sql);	
 		

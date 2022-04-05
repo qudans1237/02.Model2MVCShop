@@ -84,7 +84,7 @@
 
 <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top:10px;">
 	<tr>
-	<td align="right">
+		<td align="right">
 			<select name="searchCondition" class="ct_input_g" style="width:80px">
 				<option value="0" <%= (searchCondition.equals("0") ? "selected" : "")%>>상품번호</option>
 				<option value="1" <%= (searchCondition.equals("1") ? "selected" : "")%>>상품명</option>
@@ -93,7 +93,6 @@
 			<input 	type="text" name="searchKeyword" value="<%= searchKeyword %>"  class="ct_input_g" 
 							style="width:200px; height:20px" >
 		</td>
-		
 		<td align="right" width="70">
 			<table border="0" cellspacing="0" cellpadding="0">
 				<tr>
@@ -101,7 +100,7 @@
 						<img src="/images/ct_btnbg01.gif" width="17" height="23">
 					</td>
 					<td background="/images/ct_btnbg02.gif" class="ct_btn01" style="padding-top:3px;">
-						<a href="javascript:fncGetProductList();">검색</a>
+						<a href="javascript:fncGetUserList('<%= resultPage.getCurrentPage() %>');">검색</a>
 					</td>
 					<td width="14" height="23">
 						<img src="/images/ct_btnbg03.gif" width="14" height="23">

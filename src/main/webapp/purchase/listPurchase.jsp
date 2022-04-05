@@ -1,38 +1,31 @@
-<%@ page language="java" contentType="text/html; charset=EUC-KR"
-    pageEncoding="EUC-KR"%>
+<%@page contentType="text/html; charset=EUC-KR"%>
 
-<%@ page import="java.util.List"  %>
-<%@ page import="java.util.Map"  %>
-<%@ page import="com.model2.mvc.service.domain.Purchase" %>
-<%@page import="com.model2.mvc.common.Search" %>
+<%@page import="java.util.List"%>
+
+<%@page import="com.model2.mvc.service.domain.*"%>
+<%@page import="com.model2.mvc.common.Search"%>
 <%@page import="com.model2.mvc.common.Page"%>
 <%@page import="com.model2.mvc.common.util.CommonUtil"%>
 
-
 <%
-	List<Purchase> list= (List<Purchase>)request.getAttribute("list");
-	System.out.println("받은 list: "+list);
+	System.out.println("<<<<< listPurchase.jsp 시작 >>>>>");
 	
-	Map<String,Object> map=(Map<String,Object>)request.getAttribute("map");
-	Search search=(Search)request.getAttribute("search");
+	List<Purchase> list = (List<Purchase>)request.getAttribute("list");
+	System.out.println("받은 list : " + list);
+	
+	Search search = (Search)request.getAttribute("search");
 	System.out.println("받은 search : " + search);
 	
-	Page resultPage=(Page)request.getAttribute("resultPage");	
-	System.out.println("받은 resultPage: "+resultPage);
+	Page resultPage = (Page)request.getAttribute("resultPage");
+	System.out.println("받은 resultPage : " + resultPage);
 	
 	//==> null 을 ""(nullString)으로 변경
 	String searchCondition = CommonUtil.null2str(search.getSearchCondition());
 	String searchKeyword = CommonUtil.null2str(search.getSearchKeyword());
-	
-	System.out.println("받은 searchCondition: "+ searchCondition);
-	System.out.println("받은 searchKeyword: "+ searchKeyword);
-	
-	String menu = (String)request.getAttribute("menu");
-	System.out.println("받은 menu : " + menu);
-	
+		
+	System.out.println("searchCondition은? " + searchCondition);
+	System.out.println("searchKeyword는? " + searchKeyword);
 %>
-
-
 
 <html>
 <head>
@@ -42,13 +35,14 @@
 
 <script type="text/javascript">
 	function fncGetUserList(currentPage) {
-	document.getElementById("currentPage").value = currentPage;
-   	document.detailForm.submit();		
-}
+		document.getElementById("currentPage").value = currentPage;
+		document.detailForm.submit();
+	}
 </script>
 </head>
 
 <body bgcolor="#ffffff" text="#000000">
+
 <div style="width: 98%; margin-left: 10px;">
 
 <form name="detailForm" action="/listUser.do" method="post">
@@ -67,10 +61,11 @@
 	</tr>
 </table>
 
+
 <table width="100%" border="0" cellspacing="0" cellpadding="0"	style="margin-top: 10px;">
 	<tr>
-		<td colspan="11" >
-			전체  <%= resultPage.getTotalCount() %> 건수,	현재 <%= resultPage.getCurrentPage() %> 페이지
+		<td colspan="11">
+			전체 <%= resultPage.getTotalCount() %> 건수, 현재 <%= resultPage.getCurrentPage() %> 페이지
 		</td>
 	</tr>
 	<tr>
@@ -89,72 +84,67 @@
 	<tr>
 		<td colspan="11" bgcolor="808285" height="1"></td>
 	</tr>
-	<%
+	<% 	
 		for(int i=0; i<list.size(); i++) {
-			Purchase purchase = (Purchase)list.get(i);
+			Purchase purchase = list.get(i);
 	%>
-
 	<tr class="ct_list_pop">
-		<td align="center"><%=i + 1 %></td>
+		<td align="center">
+			<a href="/getPurchase.do?tranNo=<%= purchase.getTranNo()%>"><%= i + 1 %></a>
+		</td>
 		<td></td>
 		<td align="left">
-			<a href="/getUser.do?userId=<%=purchase.getBuyer().getUserId()%>"><%=purchase.getBuyer().getUserId()%></a>
+			<a href="/getUser.do?userId=<%=purchase.getBuyer().getUserId() %>"><%=purchase.getBuyer().getUserId() %></a>
 		</td>
 		<td></td>
 		<td align="left"><%=purchase.getReceiverName() %></td>
 		<td></td>
 		<td align="left"><%=purchase.getReceiverPhone() %></td>
 		<td></td>
-		<td align="left">현재
-		<% 
-				
-				if(purchase.getTranCode().equals("1  ")){%>
-					구매완료
-				<%}else if(purchase.getTranCode().equals("001")) {%>
-					구매완료
-				<%}else if(purchase.getTranCode().equals("002")) {%>
-					판매중
-				<%}else if(purchase.getTranCode().equals("003")) {%>
-					배송완료 
-				<%}else%>
-					
-				상태 입니다.</td>
-				
-		<td>
-		 
-		 </td>
 		<td align="left">
-			<%if(purchase.getTranCode().equals("002")){ %><a href="/updateTranCode.do?tranNo=<%=purchase.getTranNo() %>&tranCode=003">상품도착
-			</a>
-		 <%} %>
+		<% if (purchase.getTranCode().equals("001")) { %>
+			현재 구매완료 상태 입니다.
+		<% }else if (purchase.getTranCode().equals("002")) { %>
+			현재 배송중 상태 입니다. 
+		<% }else if (purchase.getTranCode().equals("003")) { %>
+			현재 배송완료 상태 입니다.
+		<% } %>
+		</td>
+		<td></td>
+		<td align="left">
+		<% if (purchase.getTranCode().trim().equals("2")) { %>
+			<a href="/updateTranCode.do?tranNo=<%=purchase.getTranNo()%>&tranCode=3&page=<%= resultPage.getCurrentPage() %>">
+			   물건도착</a>
+		<% } %>
 		</td>
 	</tr>
 	<tr>
 		<td colspan="11" bgcolor="D6D7D6" height="1"></td>
 	</tr>
-	<%} %>
+	<% } %>
 </table>
+
 
 <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 10px;">
 	<tr>
 		<td align="center">
-		<input type="hidden" id="currentPage" name="currentPage" value=""/>
+		 	<input type="hidden" id="currentPage" name="currentPage" value=""/>
 			<% if( resultPage.getCurrentPage() <= resultPage.getPageUnit() ){ %>
 					◀ 이전
 			<% }else{ %>
-					<a href="javascript:fncGetUserList('<%=resultPage.getCurrentPage()-1%>')">◀ 이전</a>
+					<a href="/listPurchase.do?page=<%=resultPage.getCurrentPage()-1%>">◀ 이전</a>
 			<% } %>
-
-			<%	for(int i=resultPage.getBeginUnitPage();i<= resultPage.getEndUnitPage() ;i++){	%>
-					<a href="javascript:fncGetUserList('<%=i %>');"><%=i %></a>
-			<% 	}  %>
-	
+			
+			<% for(int i=resultPage.getBeginUnitPage(); i<=resultPage.getEndUnitPage(); i++) { %>
+				<a href="/listPurchase.do?page=<%= i %>"><%= i %></a>
+			<% } %>
+			
 			<% if( resultPage.getEndUnitPage() >= resultPage.getMaxPage() ){ %>
 					이후 ▶
 			<% }else{ %>
-					<a href="javascript:fncGetUserList('<%=resultPage.getEndUnitPage()+1%>')">이후 ▶</a>
+					<a href="/listPurchase.do?page=<%=resultPage.getEndUnitPage()+1%>">이후 ▶</a>
 			<% } %>
-    	</td>
+		</td>
 	</tr>
 </table>
 
